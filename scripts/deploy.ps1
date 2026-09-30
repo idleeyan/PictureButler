@@ -1,6 +1,6 @@
 ﻿# PictureButler deploy script
 # Usage: .\scripts\deploy.ps1 [-SkipStart] [-KeepBackups 3]
-# Flow: version check -> deep clean -> publish -> backup old exe -> copy delivery -> sync doc -> start + health
+# Flow: version check -> deep clean -> publish -> backup old exe -> copy delivery + extension -> sync doc -> start + health
 param(
     [switch]$SkipStart,
     [int]$KeepBackups = 3,
@@ -10,6 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $srcNative = Join-Path $root "src-native"
+$srcExt = Join-Path $root "extension"
 
 function Fail([string]$msg) {
     Write-Host "[ABORT] $msg" -ForegroundColor Red
@@ -28,21 +29,29 @@ if (-not $env:NUGET_PACKAGES) { $env:NUGET_PACKAGES = "E:\NuGet\packages" }
 # ---- 1. version sync (4 places must match) ----
 Write-Host ""
 Write-Host "=== 1. version check ===" -ForegroundColor Cyan
-$csproj = Get-Content (Join-Path $srcNative "PictureButler.csproj") -Raw
+$csprojPath = Join-Path $srcNative "PictureButler.csproj"
+if (-not (Test-Path $csprojPath)) { Fail "missing $csprojPath" }
+$csproj = Get-Content $csprojPath -Raw
 if ($csproj -notmatch '<Version>([\d.]+)</Version>') { Fail "csproj: no <Version>" }
 $ver = $Matches[1]
 Ok "csproj version = $ver"
 
-$http = Get-Content (Join-Path $srcNative "LocalHttpServer.cs") -Raw
+$httpPath = Join-Path $srcNative "LocalHttpServer.cs"
+$http = Get-Content $httpPath -Raw
 $httpHits = [regex]::Matches($http, [regex]::Escape($ver)).Count
 if ($httpHits -lt 2) {
     Fail "LocalHttpServer.cs has $httpHits hit(s) for '$ver' (need >=2: comment + value)"
 }
 Ok "LocalHttpServer.cs literals = $ver"
 
-$srcDoc = Join-Path $srcNative "yuan-sheng-ban-shuo-ming.txt"
-$srcDocCn = Join-Path $srcNative ([char]0x539F + [char]0x751F + [char]0x7248 + [char]0x8BF4 + [char]0x660E + ".txt")
-if (Test-Path $srcDocCn) { $srcDoc = $srcDocCn }
+$srcDoc = $null
+foreach ($name in @(
+        ([char]0x539F + [char]0x751F + [char]0x7248 + [char]0x8BF4 + [char]0x660E + ".txt"),
+        "yuan-sheng-ban-shuo-ming.txt")) {
+    $p = Join-Path $srcNative $name
+    if (Test-Path $p) { $srcDoc = $p; break }
+}
+if (-not $srcDoc) { Fail "source doc not found in $srcNative" }
 $docLine = (Get-Content $srcDoc -TotalCount 1)
 if ($docLine -notmatch [regex]::Escape($ver)) {
     Fail "source doc first line missing $ver : $docLine"
@@ -125,11 +134,30 @@ else {
 # ---- 5. stop running instance and overwrite ----
 Write-Host ""
 Write-Host "=== 5. overwrite delivery ===" -ForegroundColor Cyan
+$stillRunning = $false
 Get-Process | Where-Object { $_.ProcessName -like 'PictureButler*' } | ForEach-Object {
     Write-Host ("stop pid " + $_.Id + " " + $_.ProcessName)
-    try { Stop-Process -Id $_.Id -Force } catch { Write-Host ("[WARN] " + $_.Exception.Message) -ForegroundColor Yellow }
+    try { Stop-Process -Id $_.Id -Force -ErrorAction Stop }
+    catch {
+        Write-Host ("[WARN] Stop-Process failed: " + $_.Exception.Message) -ForegroundColor Yellow
+        $script:stillRunning = $true
+    }
 }
 Start-Sleep -Milliseconds 800
+
+# 若进程仍占着 exe（僵尸/拒绝访问），走「改名腾位」：旧文件挪开，新文件写入原名
+if ($stillRunning -or (Test-Path $dstExe)) {
+    try {
+        $probe = [System.IO.File]::Open($dstExe, 'Open', 'Read', 'None')
+        $probe.Close()
+    }
+    catch {
+        Write-Host "[WARN] exe still locked, rename-away fallback" -ForegroundColor Yellow
+        $park = Join-Path $DeliveryDir ("PictureButler.exe.locked-" + (Get-Date -Format "yyyyMMddHHmmss") + ".old")
+        try { Move-Item $dstExe $park -Force; Ok ("parked locked exe -> " + (Split-Path $park -Leaf)) }
+        catch { Fail ("cannot overwrite locked exe and rename failed: " + $_.Exception.Message) }
+    }
+}
 
 Copy-Item $exe $dstExe -Force
 $dstInfo = Get-Item $dstExe
@@ -140,6 +168,35 @@ Ok ("copied " + $dstExe + " (" + $dstInfo.Length + " bytes)")
 
 Copy-Item $srcDoc $dstDoc -Force
 Ok "synced delivery doc"
+
+# ---- 5b. sync extension (icons + js/html/manifest) ----
+# 历史事故：deploy 只拷 exe，交付目录扩展图标一直是旧版，与程序本体不同源。
+$dstExt = Join-Path $DeliveryDir "extension"
+if (Test-Path $srcExt) {
+    if (-not (Test-Path $dstExt)) { New-Item -ItemType Directory -Path $dstExt | Out-Null }
+    # 排除 _backup_original* —— 那是仓库里的历史图标备份，不需要进交付
+    $robolog = Join-Path $env:TEMP "pb_deploy_ext.log"
+    & robocopy $srcExt $dstExt /MIR /NFL /NDL /NJH /NJS /NP /XD "_backup_original" "_backup_original_real" /LOG:$robolog | Out-Null
+    $rc = $LASTEXITCODE
+    # robocopy: 0-7 success, >=8 failure
+    if ($rc -ge 8) { Fail "robocopy extension failed rc=$rc (see $robolog)" }
+    Ok ("synced extension -> " + $dstExt + "  (robocopy rc=" + $rc + ")")
+
+    # 哈希复核图标（真·同源证明）
+    foreach ($icon in @("icon16.png", "icon48.png", "icon128.png")) {
+        $s = Join-Path (Join-Path $srcExt "icons") $icon
+        $d = Join-Path (Join-Path $dstExt "icons") $icon
+        if ((Test-Path $s) -and (Test-Path $d)) {
+            $hs = (Get-FileHash $s).Hash
+            $hd = (Get-FileHash $d).Hash
+            if ($hs -ne $hd) { Fail ("icon hash mismatch: " + $icon) }
+        }
+    }
+    Ok "extension icons hash-match"
+}
+else {
+    Write-Host "[WARN] no source extension folder, skip" -ForegroundColor Yellow
+}
 
 # ---- 6. start and verify health ----
 if (-not $SkipStart) {
@@ -168,4 +225,5 @@ if (-not $SkipStart) {
 Write-Host ""
 Write-Host ("===== DEPLOYED " + $ver + " =====") -ForegroundColor Green
 Write-Host ("delivery: " + $dstExe)
+Write-Host ("extension: " + (Join-Path $DeliveryDir "extension"))
 Write-Host ("backups:  " + (Join-Path $DeliveryDir "PictureButler.exe.*.bak") + " (keep " + $KeepBackups + ")")

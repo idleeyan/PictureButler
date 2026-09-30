@@ -11,6 +11,24 @@ public partial class App : System.Windows.Application
     private EventWaitHandle? _activateSignal;
     private Thread? _activateThread;
 
+    // 重复异常计数：短窗口内反复炸就升级为 fatal，避免「吞掉异常继续跑」变成带病运行（0.62.9）
+    private static readonly Queue<DateTime> _recentErrors = new();
+    private static readonly object _errGate = new();
+    private const int ErrorBurstLimit = 3;
+    private static readonly TimeSpan ErrorBurstWindow = TimeSpan.FromMinutes(1);
+
+    private static bool IsErrorBurst()
+    {
+        lock (_errGate)
+        {
+            var now = DateTime.UtcNow;
+            _recentErrors.Enqueue(now);
+            while (_recentErrors.Count > 0 && now - _recentErrors.Peek() > ErrorBurstWindow)
+                _recentErrors.Dequeue();
+            return _recentErrors.Count >= ErrorBurstLimit;
+        }
+    }
+
     /// <summary>
     /// 三类未处理异常的统一入口（0.62.6）。
     /// 没有它们，WPF 未处理异常是「无弹窗、无日志、进程直接消失」——用户只看到闪一下。
@@ -25,8 +43,27 @@ public partial class App : System.Windows.Application
 
     private void OnDispatcherUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        // UI 线程异常：通常还能继续跑（某个操作失败），弹非模态错误窗，用户可选继续/退出
         AppLogger.Error("DispatcherUnhandledException", e.Exception);
+
+        // 1 分钟内同一类错误连炸 3 次 → 升级 fatal。
+        // 否则「吞掉继续跑」可能让半完成的数据操作带着脏状态继续（比直接崩更危险）。
+        if (IsErrorBurst())
+        {
+            AppLogger.Error("error burst detected -> escalate to fatal shutdown");
+            try
+            {
+                ErrorWindow.Show("程序反复出错，即将退出",
+                    $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                    $"版本：{GetType().Assembly.GetName().Version}\n" +
+                    $"一分钟内连续出错超过 {ErrorBurstLimit} 次，继续运行可能造成数据不一致。\n\n" +
+                    e.Exception.ToString(),
+                    fatal: true);
+            }
+            catch { }
+            e.Handled = false; // 让它走进程退出，而不是带着半损状态继续
+            return;
+        }
+
         try
         {
             ErrorWindow.Show("程序出错了",

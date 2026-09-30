@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Microsoft.Data.Sqlite;
 
 namespace PictureButler;
@@ -60,6 +61,13 @@ public class ImgtagRecognizer
         {
             if (ImgtagNative.IsReady()) { msg = "识别引擎已就绪（进程内）"; return true; }
 
+            // 预检已失败时别再白跑一次 init（也别抛 DllNotFound）——直接把原因交出去
+            if (!ImgtagNative.PreflightOk && !string.IsNullOrEmpty(ImgtagNative.LastPreflightMessage))
+            {
+                msg = ImgtagNative.LastPreflightMessage!;
+                return false;
+            }
+
             ImgtagNative.SetDataDirectory(_imgtagDir);
             if (ImgtagNative.Initialize(_imgtagDir, _imgtagDb, LmStudioUrl, null, out var err))
             {
@@ -69,6 +77,18 @@ public class ImgtagRecognizer
             msg = "识别引擎不可用：" + err;
             return false;
         }
+    }
+
+    /// <summary>把识别引擎不可用的原因用对话框讲清楚（比状态栏文字可靠，不会被下次计数覆盖）。</summary>
+    public static void ShowEngineUnavailable(Window owner, string? msg)
+    {
+        var text = msg;
+        if (string.IsNullOrWhiteSpace(text)) text = "识别引擎不可用。";
+        try
+        {
+            MessageBox.Show(owner, text, "识别引擎", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        catch { }
     }
 
     /// <summary>释放识别引擎（程序退出前调用，释放原生连接池与运行时）</summary>

@@ -74,9 +74,14 @@ internal static class ImgtagNative
         if (!string.IsNullOrWhiteSpace(dir)) _searchDir = dir;
     }
 
+    /// <summary>最近一次预检结论（0.62.9）。UI 点「识别人脸 / AI 打标」时若引擎不可用，用它给明确原因。</summary>
+    public static string? LastPreflightMessage { get; private set; }
+    public static bool PreflightOk { get; private set; }
+
     /// <summary>
-    /// 启动预检（0.62.7）：只检查文件是否齐全，**不**初始化引擎（保持秒开）。
-    /// 缺文件时返回明确中文原因，提示词等功能照常可用——不因识别引擎缺失而整体崩掉。
+    /// 启动预检（0.62.7 / 0.62.9 加强）：查文件 + **试加载 DLL + 解析导出符号**，
+    /// 但不初始化引擎、不加载 ONNX 模型（保持秒开）。
+    /// 失败时返回明确中文原因；提示词等功能照常可用。
     /// </summary>
     public static (bool Ok, string Message) Preflight(string? dataDir)
     {
@@ -97,15 +102,48 @@ internal static class ImgtagNative
             !Directory.EnumerateFileSystemEntries(models, "*", SearchOption.AllDirectories).Any())
             missing.Add("models\\（ONNX 模型）");
 
-        if (missing.Count == 0)
+        if (missing.Count > 0)
         {
-            AppLogger.Info($"imgtag preflight OK  dir={dir}");
-            return (true, "识别引擎文件齐全");
+            PreflightOk = false;
+            LastPreflightMessage =
+                $"识别引擎文件不完整，人脸识别 / AI 打标暂不可用。缺少：{string.Join("、", missing)}。" +
+                $"目录：{dir}。请确认 imgtag 文件夹完整后重启程序。";
+            AppLogger.Warn($"imgtag preflight FAILED  dir={dir}  missing={string.Join(",", missing)}");
+            return (false, LastPreflightMessage);
         }
 
-        var msg = $"识别引擎文件不完整，人脸识别 / AI 打标暂不可用。缺少：{string.Join("、", missing)}。目录：{dir}。请确认 imgtag 文件夹完整后重启程序。";
-        AppLogger.Warn($"imgtag preflight FAILED  dir={dir}  missing={string.Join(",", missing)}");
-        return (false, msg);
+        // 文件齐了还要能真加载：架构不对 / DLL 损坏 / 缺导出 都会在这里现形，
+        // 而不是等到第一次 P/Invoke 时抛 DllNotFoundException（恰恰是预检要防的场景）。
+        // 只 TryLoad + 查符号，不调 pb_imgtag_init，毫秒级。
+        if (!NativeLibrary.TryLoad(native, out var handle))
+        {
+            PreflightOk = false;
+            LastPreflightMessage =
+                $"imgtag_native.dll 无法加载（可能架构不匹配或文件损坏）：{native}。人脸识别 / AI 打标暂不可用。";
+            AppLogger.Warn($"imgtag preflight FAILED  TryLoad failed  {native}");
+            return (false, LastPreflightMessage);
+        }
+        try
+        {
+            if (!NativeLibrary.TryGetExport(handle, "pb_imgtag_health", out _))
+            {
+                PreflightOk = false;
+                LastPreflightMessage =
+                    $"imgtag_native.dll 缺少导出符号 pb_imgtag_health（文件版本不对）：{native}。人脸识别 / AI 打标暂不可用。";
+                AppLogger.Warn($"imgtag preflight FAILED  missing export  {native}");
+                return (false, LastPreflightMessage);
+            }
+        }
+        finally
+        {
+            // 释放探针句柄；真正使用时由 DllImportResolver 重新加载
+            try { NativeLibrary.Free(handle); } catch { }
+        }
+
+        PreflightOk = true;
+        LastPreflightMessage = null;
+        AppLogger.Info($"imgtag preflight OK  dir={dir}  (TryLoad + export verified)");
+        return (true, "识别引擎就绪");
     }
 
     static ImgtagNative()

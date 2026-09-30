@@ -726,9 +726,10 @@ public partial class ImgViewerWindow : Window
         StatusText.Text = "AI 打标中…";
         try
         {
-            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out _))
+            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out var engMsg))
             {
                 StatusText.Text = "识别服务不可用";
+                ImgtagRecognizer.ShowEngineUnavailable(this, engMsg);
                 return;
             }
             var progress = new Action<string>(m => Dispatcher.Invoke(() => StatusText.Text = m));

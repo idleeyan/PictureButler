@@ -9,8 +9,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>PictureButler</RootNamespace>
     <AssemblyName>PictureButler</AssemblyName>
-    <Version>0.62.8</Version>
-    <InformationalVersion>0.62.8</InformationalVersion>
+    <Version>0.62.9</Version>
+    <InformationalVersion>0.62.9</InformationalVersion>
     <Product>PictureButler</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- 程序图标（exe 与任务栏）：由 .workbuddy\mkicon.py 生成，

@@ -1154,7 +1154,12 @@ public partial class MainWindow : Window
             progress.Invoke("检查 LM Studio…");
             if (!_recognizer.ServerRunning())
             {
-                if (!_recognizer.EnsureServer(out _)) { SetTagStatus("识别服务不可用"); return; }
+                if (!_recognizer.EnsureServer(out var engMsgTag))
+                {
+                    SetTagStatus("识别服务不可用");
+                    ImgtagRecognizer.ShowEngineUnavailable(this, engMsgTag);
+                    return;
+                }
             }
             bool lmOk = false;
             await Task.Run(() => lmOk = _recognizer.LmStudioAvailable());
@@ -3602,9 +3607,10 @@ public partial class MainWindow : Window
         ImgCountText.Text = "人脸识别中…";
         try
         {
-            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out _))
+            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out var engMsg1))
             {
                 ImgCountText.Text = "识别服务不可用";
+                ImgtagRecognizer.ShowEngineUnavailable(this, engMsg1);
                 return;
             }
             var progress = new Action<string>(m => Dispatcher.Invoke(() => ImgCountText.Text = m));
@@ -3645,9 +3651,10 @@ public partial class MainWindow : Window
         ImgCountText.Text = "AI 打标中…";
         try
         {
-            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out _))
+            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out var engMsg2))
             {
                 ImgCountText.Text = "识别服务不可用";
+                ImgtagRecognizer.ShowEngineUnavailable(this, engMsg2);
                 return;
             }
             var progress = new Action<string>(m => Dispatcher.Invoke(() => ImgCountText.Text = m));
@@ -4436,8 +4443,12 @@ public partial class MainWindow : Window
         }
         else
         {
-            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out var em))
-            { ImgRecognizeStatus.Text = string.IsNullOrEmpty(em) ? "识别服务不可用" : em; return; }
+            if (!_recognizer.ServerRunning() && !_recognizer.EnsureServer(out var engMsg3))
+            {
+                ImgRecognizeStatus.Text = string.IsNullOrEmpty(engMsg3) ? "识别服务不可用" : engMsg3;
+                ImgtagRecognizer.ShowEngineUnavailable(this, engMsg3);
+                return;
+            }
             if (!_recognizer.LmStudioAvailable())
             { ImgRecognizeStatus.Text = "AI 打标需要 LM Studio（127.0.0.1:1234），当前未运行"; return; }
         }
