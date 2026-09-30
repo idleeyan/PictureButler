@@ -35,10 +35,10 @@ PictureButler/
 ├── src-native/          C# WPF 主程序（net10.0-windows）
 ├── imgtag-rs/           Rust 识别引擎（cdylib imgtag_native + 可选 imgtag.exe）
 ├── extension/           Chrome 扩展「PictureButler 拾取器」
-├── docs/                设计文档与归档
-├── PictureButler界面设计方案-v2.md   界面方案 v2 规范
 └── scripts/             构建与部署脚本
 ```
+
+设计与计划文档、智能体工作记录仅保留在本地，不进版本库。
 
 ---
 
@@ -121,7 +121,6 @@ cargo build --release
 
 ## 开发说明
 
-- 界面规范：`PictureButler界面设计方案-v2.md`
 - 改 XAML 先 `dotnet clean`，避免陈旧 BAML
 - 交互类改动需真机验收（本环境无法驱动 WPF 鼠标）
 - 提交前确认 `git diff` 只包含预期改动；构建产物与数据库已被 `.gitignore` 排除
