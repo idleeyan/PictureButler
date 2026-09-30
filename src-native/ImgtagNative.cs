@@ -74,6 +74,40 @@ internal static class ImgtagNative
         if (!string.IsNullOrWhiteSpace(dir)) _searchDir = dir;
     }
 
+    /// <summary>
+    /// 启动预检（0.62.7）：只检查文件是否齐全，**不**初始化引擎（保持秒开）。
+    /// 缺文件时返回明确中文原因，提示词等功能照常可用——不因识别引擎缺失而整体崩掉。
+    /// </summary>
+    public static (bool Ok, string Message) Preflight(string? dataDir)
+    {
+        var dir = dataDir;
+        if (string.IsNullOrWhiteSpace(dir))
+            dir = Path.Combine(AppContext.BaseDirectory, "imgtag");
+        var missing = new List<string>();
+
+        var native = Path.Combine(dir, "imgtag_native.dll");
+        if (!File.Exists(native)) missing.Add("imgtag_native.dll");
+
+        var ort = Path.Combine(dir, "onnxruntime.dll");
+        if (!File.Exists(ort)) missing.Add("onnxruntime.dll");
+
+        var models = Path.Combine(dir, "models");
+        // ONNX 模型在 models\ 下的子目录里（如 buffalo_l\），必须递归看
+        if (!Directory.Exists(models) ||
+            !Directory.EnumerateFileSystemEntries(models, "*", SearchOption.AllDirectories).Any())
+            missing.Add("models\\（ONNX 模型）");
+
+        if (missing.Count == 0)
+        {
+            AppLogger.Info($"imgtag preflight OK  dir={dir}");
+            return (true, "识别引擎文件齐全");
+        }
+
+        var msg = $"识别引擎文件不完整，人脸识别 / AI 打标暂不可用。缺少：{string.Join("、", missing)}。目录：{dir}。请确认 imgtag 文件夹完整后重启程序。";
+        AppLogger.Warn($"imgtag preflight FAILED  dir={dir}  missing={string.Join(",", missing)}");
+        return (false, msg);
+    }
+
     static ImgtagNative()
     {
         try { NativeLibrary.SetDllImportResolver(typeof(ImgtagNative).Assembly, Resolve); }

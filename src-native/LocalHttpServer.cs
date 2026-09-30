@@ -11,7 +11,7 @@ namespace PictureButler;
 /// 浏览器扩展通过它获取星标提示词列表；同时为程序自身提供人脸缩略图端点
 /// （原先由独立 imgtag 服务的 8520 端口提供，现全部收敛到本进程内）。
 /// API：
-///   GET /api/health          → {"ok":true,"app":"PictureButler","version":"0.62.6"}
+///   GET /api/health          → {"ok":true,"app":"PictureButler","version":"0.62.8"}
 ///   GET /api/starred         → [{"id","title","content","updatedAt"}, ...]
 ///   GET /api/prompts?q=      → 搜索提示词
 ///   GET /api/face-thumbnail/{faceId} → 人脸裁剪缩略图（JPEG，进程内生成/缓存）
@@ -230,7 +230,7 @@ public class LocalHttpServer : IDisposable
         switch (path)
         {
             case "/api/health":
-                return ("200 OK", "{\"ok\":true,\"app\":\"PictureButler\",\"version\":\"0.62.6\"}");
+                return ("200 OK", "{\"ok\":true,\"app\":\"PictureButler\",\"version\":\"0.62.8\"}");
 
             case "/api/starred":
             {

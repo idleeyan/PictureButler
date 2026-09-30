@@ -416,11 +416,28 @@ public partial class MainWindow : Window
         RecoverImageFoldersIfEmpty();
         var imgTagDir = AppSettings.ResolveImgTagDir(_settings.ImgtagDbPath);
         _imgTagDir = imgTagDir;
+
+        // 0.62.7：关键小库按天滚动快照（防误清，0.62.3 类事故的后悔药）
+        var indexDbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "com.picturebutler.app", "image_index.db");
+        try { DbSnapshot.SnapshotIfChanged(indexDbPath); } catch { }
+
+        // 0.62.7：识别引擎预检（只查文件，不加载模型）——缺文件时明确提示，识别功能降级，不整体崩
+        var pre = ImgtagNative.Preflight(imgTagDir);
+        if (!pre.Ok)
+        {
+            AppLogger.Warn("imgtag preflight: " + pre.Message);
+            try
+            {
+                ImgCountText.Text = "识别引擎文件不完整，人脸/打标暂不可用";
+            }
+            catch { }
+        }
+
         _recognizer = new ImgtagRecognizer(
             imgTagDir,
             _settings.ImgtagDbPath,
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "com.picturebutler.app", "image_index.db"));
+            indexDbPath);
 
         // 把设置中的人脸识别参数同步到引擎
         _recognizer.FaceOptions.Sensitivity = _settings.FaceDetectSensitivity;

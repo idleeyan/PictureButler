@@ -1,4 +1,4 @@
-PictureButler 原生版（版本 0.62.6）
+PictureButler 原生版（版本 0.62.8）
 ========================================
 
 架构：原生 Windows 桌面程序（WPF / .NET 10）+ 浏览器扩展拾取器。
@@ -6,7 +6,7 @@ PictureButler 原生版（版本 0.62.6）
 进程内运行，无独立 imgtag.exe、无 8520 端口，识别数据仍是同一份 db.sqlite。
 
 【程序本体】
-- 文件：PictureButler-绿色版.exe（免安装，双击运行）
+- 文件：PictureButler.exe（免安装，双击运行）
 - 提示词管理：列表 / 搜索 / 星标 / 详情 / 复制（数据与旧版同库，直接读取）
 - 图片库：浏览 / 分页 / 搜索 / 大图查看 / 人物 / 标签（可垂直滚动）
 - 人脸识别 / AI 打标 / 人脸缩略图：全部在程序进程内完成
@@ -31,6 +31,18 @@ PictureButler 原生版（版本 0.62.6）
   + onnxruntime.dll + imgtag_native.dll
 
 【版本历史】
+0.62.8 修复 0.62.7 启动预检误报：models 检查改为递归（模型在 models\buffalo_l\ 等子目录，
+  原先只扫一层会把齐全的引擎误判成缺模型）。
+
+0.62.7 数据保护 + 启动预检（体检 ④⑥）：
+  ① image_index.db 启动时做**按天滚动快照**（backups\image_index.db.yyyyMMdd.bak，保留 7 天）。
+     防的是「程序逻辑误清」——0.62.3 整页消失就是这类；1MB 级库，成本可忽略。
+     prompts.db 体积大不做自动快照（清理/压缩前仍须人工确认）。
+  ② 启动预检识别引擎文件（imgtag_native.dll / onnxruntime.dll / models\）：缺失时**明确中文提示**
+     并只降级「人脸 / AI 打标」，提示词与图片库照常可用——不再「双击一闪就没」。
+     预检只查文件、不加载模型，启动仍然秒开。
+  ③ 说明文件里的旧名「PictureButler-绿色版.exe」改为「PictureButler.exe」（与交付物一致）。
+
 0.62.6 稳定性地基：全局异常处理 + 统一日志（此前崩溃零痕迹）：
   ① 装上三个未处理异常钩子（Dispatcher / AppDomain / TaskScheduler）。此前 WPF 未处理异常
      是「无弹窗、无日志、进程直接消失」，用户只看到闪一下、手上没有任何证据。
