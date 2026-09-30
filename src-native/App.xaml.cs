@@ -1,5 +1,7 @@
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace PictureButler;
 
@@ -9,8 +11,62 @@ public partial class App : System.Windows.Application
     private EventWaitHandle? _activateSignal;
     private Thread? _activateThread;
 
+    /// <summary>
+    /// 三类未处理异常的统一入口（0.62.6）。
+    /// 没有它们，WPF 未处理异常是「无弹窗、无日志、进程直接消失」——用户只看到闪一下。
+    /// </summary>
+    private void InstallExceptionHooks()
+    {
+        DispatcherUnhandledException += OnDispatcherUnhandled;
+        AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandled;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTask;
+        AppLogger.Info($"App started  pid={Environment.ProcessId}  ver={GetType().Assembly.GetName().Version}");
+    }
+
+    private void OnDispatcherUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        // UI 线程异常：通常还能继续跑（某个操作失败），弹非模态错误窗，用户可选继续/退出
+        AppLogger.Error("DispatcherUnhandledException", e.Exception);
+        try
+        {
+            ErrorWindow.Show("程序出错了",
+                $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                $"版本：{GetType().Assembly.GetName().Version}\n\n" +
+                e.Exception.ToString(),
+                fatal: false);
+        }
+        catch { }
+        e.Handled = true;
+    }
+
+    private void OnDomainUnhandled(object sender, UnhandledExceptionEventArgs e)
+    {
+        // 进程级：界面状态已不可信，只记日志并弹 fatal 窗（不给「继续」）
+        var ex = e.ExceptionObject as Exception;
+        AppLogger.Error($"UnhandledException  terminating={e.IsTerminating}", ex ?? new Exception(e.ExceptionObject?.ToString() ?? "(null)"));
+        if (e.IsTerminating)
+        {
+            ErrorWindow.Show("程序即将退出",
+                $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                $"版本：{GetType().Assembly.GetName().Version}\n" +
+                $"终止：{e.IsTerminating}\n\n" +
+                (ex?.ToString() ?? e.ExceptionObject?.ToString() ?? "(unknown)"),
+                fatal: true);
+        }
+    }
+
+    private void OnUnobservedTask(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        // 后台 Task 的未观察异常：不打断 UI，只记日志
+        AppLogger.Error("UnobservedTaskException", e.Exception);
+        e.SetObserved();
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 钩子必须最先装：后面的任何崩溃都要能留下痕迹
+        InstallExceptionHooks();
+
         // 主题必须在 MainWindow 解析前选好字典：StaticResource 只在元素构造时解析一次
         var settings = AppSettings.Load();
         AppCursors.Apply();

@@ -1,4 +1,4 @@
-PictureButler 原生版（版本 0.62.5）
+PictureButler 原生版（版本 0.62.6）
 ========================================
 
 架构：原生 Windows 桌面程序（WPF / .NET 10）+ 浏览器扩展拾取器。
@@ -31,6 +31,16 @@ PictureButler 原生版（版本 0.62.5）
   + onnxruntime.dll + imgtag_native.dll
 
 【版本历史】
+0.62.6 稳定性地基：全局异常处理 + 统一日志（此前崩溃零痕迹）：
+  ① 装上三个未处理异常钩子（Dispatcher / AppDomain / TaskScheduler）。此前 WPF 未处理异常
+     是「无弹窗、无日志、进程直接消失」，用户只看到闪一下、手上没有任何证据。
+  ② 新增统一日志 %APPDATA%\com.picturebutler.app\logs\pb_yyyyMMdd.log（按天滚动，保留 14 天），
+     不写程序目录。Release 保留 ERROR/WARN。
+  ③ UI 线程异常弹**非模态**错误窗：全文可复制 +「继续 / 退出」。不用 MessageBox——
+     模态会把「某个操作失败」升级成「用户被迫中断」。进程级异常只给「退出」。
+  另：新增 scripts/deploy.ps1（版本四处校验、彻底 clean、publish exit 守卫、旧 exe 备份 3 份、
+  health 复核）；项目根目录补 README.md。
+
 0.62.5 修复「浏览人物图片或标签相册时，左右快捷键无法翻页」：
   根因与 0.62.4 的证件照/文档同类：打开查看器时只给「全部」和「证件照/文档」附了导航序列，
   人物相册（personPhotos）与标签相册（tagPhotos）没附 → 查看器 _seq 为空，←/→、A/D、
