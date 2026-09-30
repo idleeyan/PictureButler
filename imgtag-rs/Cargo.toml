@@ -1,0 +1,76 @@
+[package]
+name = "imgtag"
+version = "0.1.0"
+edition = "2021"
+description = "Local AI photo album manager (Rust rewrite)"
+build = "build.rs"
+
+# 进程内集成：cdylib 供 PictureButler（C#）P/Invoke 调用；rlib 供 imgtag.exe 复用同一套实现
+[lib]
+name = "imgtag_native"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "imgtag"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+# Web framework
+axum = { version = "0.7", features = ["multipart"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
+# Database
+rusqlite = { version = "0.31", features = ["bundled-full", "blob"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.24"
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# HTTP client (LM Studio)
+reqwest = { version = "0.12", features = ["json", "stream"] }
+# Image processing
+image = "0.25"
+fast_image_resize = "3"
+kamadak-exif = "0.5"
+# Base64 / hashing
+base64 = "0.22"
+md5 = "0.7"
+# Trash (recycle bin)
+trash = "4"
+# ONNX inference
+ort = { version = "2.0.0-rc.13", features = ["load-dynamic", "ndarray"] }
+ndarray = "0.15"
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Error handling
+anyhow = "1"
+thiserror = "1"
+# Utils
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+futures-util = "0.3"
+tokio-stream = "0.1"
+bytes = "1"
+mime_guess = "2"
+urlencoding = "2"
+walkdir = "2"
+regex = "1"
+once_cell = "1"
+parking_lot = "0.12"
+async-trait = "0.1"
+
+[build-dependencies]
+# Windows resource (icon + version info)
+embed-resource = "2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

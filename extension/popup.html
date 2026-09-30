@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PictureButler 拾取器</title>
+<style>
+  /* 与主程序 App.xaml 的 Design Token 同表（键名一一对应，改一处两边同步） */
+  :root {
+    color-scheme: dark;
+    --bg:            #1B1E28;
+    --titlebar:      #161A24;
+    --panel:         #20242F;
+    --panel-alt:     #232735;
+    --card:          #191D28;
+    --panel-deep:    #10131A;
+    --border:        #333A4D;
+    --border-strong: #3A4256;
+    --hover:         #2A3040;
+    --text:          #E8EAF2;
+    --text-dim:      #9AA3B5;
+    --text-faint:    #5A6480;
+    --accent:        #5B8DEF;
+    --star:          #F5B84B;
+    --success:       #3D9A6A;
+    --success-soft:  #123524;
+    --danger:        #E5484D;
+    --danger-soft:   #3B1D12;
+    --r1: 4px; --r2: 6px; --r3: 8px;
+    --s1: 4px; --s2: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 340px;                      /* 保持不变：用户已有肌肉记忆 */
+    font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: var(--s2);
+    padding: 12px 14px;
+    background: var(--titlebar);
+    border-bottom: 1px solid var(--border);
+  }
+  .header .logo { display: block; flex: 0 0 auto; }
+  .header .title { font-size: 13px; font-weight: 600; flex: 1; }
+  .status { font-size: 10.5px; padding: 3px 8px; border-radius: 999px; }
+  .status.on  { background: var(--success-soft); color: var(--success); }
+  .status.off { background: var(--danger-soft);  color: var(--danger); }
+  .toolbar {
+    display: flex;
+    gap: var(--s1);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar input {
+    flex: 1;
+    height: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    color: var(--text);
+    padding: 0 10px;
+    font-size: 12px;
+    outline: none;
+  }
+  .toolbar input:focus { border-color: var(--accent); }
+  .toolbar button {
+    height: 28px;
+    background: var(--hover);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r2);
+    color: var(--text);
+    padding: 0 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .toolbar button:hover { border-color: var(--accent); }
+  #list { max-height: 420px; overflow-y: auto; padding: var(--s2) 10px 12px; }
+  .item {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: var(--s2);
+    background: var(--card);
+    border: 1px solid var(--panel-alt);
+    border-radius: var(--r3);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .item:hover { background: var(--panel-alt); border-color: var(--border); }
+  .item .thumb {
+    flex: 0 0 56px;
+    width: 56px; height: 56px;
+    border-radius: var(--r3);
+    background: var(--panel-deep);
+    border: 1px solid var(--panel-alt);
+    object-fit: cover;
+    overflow: hidden;
+  }
+  .item .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .item .thumb .noimg {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-faint); font-size: 18px;
+  }
+  .item .body { flex: 1; min-width: 0; }
+  .item .t { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: var(--s1); }
+  .item .t .star { display: inline-block; vertical-align: -1px; margin-right: var(--s1); }
+  .item .c {
+    font-size: 11px;
+    color: var(--text-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 16px;
+  }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 12px;
+    line-height: 20px;
+  }
+  .footer {
+    padding: 8px 14px;
+    font-size: 10.5px;
+    color: var(--text-faint);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .footer:hover { color: var(--text-dim); }
+  #toast {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: var(--success-soft);
+    color: var(--success);
+    font-size: 11.5px;
+    text-align: center;
+    padding: 8px;
+    display: none;
+  }
+  #toast.err { background: var(--danger-soft); color: var(--danger); }
+</style>
+</head>
+<body>
+  <div class="header">
+    <!-- 品牌标记：与主程序标题栏同源几何（16px 矢量，EvenOdd 内挖空） -->
+    <svg class="logo" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 0 L16 8 L8 16 L0 8 Z M8 4.6 L11.4 8 L8 11.4 L4.6 8 Z" fill="#5B8DEF" fill-rule="evenodd"/>
+    </svg>
+    <span class="title">PictureButler 拾取器</span>
+    <span id="status" class="status off">未连接</span>
+  </div>
+  <div class="toolbar">
+    <input id="search" placeholder="搜索星标提示词…">
+    <button id="refresh">刷新</button>
+  </div>
+  <div id="list"></div>
+  <div class="footer" id="openApp">启动 PictureButler 程序…</div>
+  <div id="toast"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

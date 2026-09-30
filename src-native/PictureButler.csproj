@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>PictureButler</RootNamespace>
+    <AssemblyName>PictureButler</AssemblyName>
+    <Version>0.62.5</Version>
+    <InformationalVersion>0.62.5</InformationalVersion>
+    <Product>PictureButler</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 程序图标（exe 与任务栏）：由 .workbuddy\mkicon.py 生成，
+         几何与主窗标题栏品牌标记、扩展图标同源 -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="app.ico" />
+    <Resource Include="app.ico" />
+    <Resource Include="cursors\*.cur" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 移除 WinForms 隐式全局 using，避免与 WPF 类型歧义；仅 TrayService 显式引用 -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,98 @@
+<!-- AI生成 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>证件照 · 文档 · 标签展示</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<p data-aigc-mark="1" style="margin:0 0 8px;font-size:10px;line-height:1.3;color:#6b6560;font-weight:400;">AI生成</p>
+
+  <div class="app">
+    <aside class="rail">
+      <div class="brand">
+        <div class="brand-mark">标</div>
+        <div>
+          <div class="brand-title">标签展示</div>
+          <div class="brand-sub">PictureButler</div>
+        </div>
+      </div>
+
+      <nav class="cats" id="cats">
+        <button class="cat is-active" data-cat="all" type="button">
+          <span class="cat-icon">▦</span>
+          <span class="cat-name">全部</span>
+          <span class="cat-count" id="count-all">0</span>
+        </button>
+        <button class="cat" data-cat="id" type="button">
+          <span class="cat-icon gold">证</span>
+          <span class="cat-name">证件照</span>
+          <span class="cat-count" id="count-id">0</span>
+        </button>
+        <button class="cat" data-cat="doc" type="button">
+          <span class="cat-icon green">文</span>
+          <span class="cat-name">文档</span>
+          <span class="cat-count" id="count-doc">0</span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">
+        <div class="hint">按标签聚合展示</div>
+        <div class="hint dim">证件照 · 文档 / 来自本地图库</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div>
+          <h1 id="page-title">全部标签</h1>
+          <p id="page-sub" class="sub">证件照与文档的专门展示视图</p>
+        </div>
+        <div class="search-wrap">
+          <input id="search" type="search" placeholder="搜索标题 / 描述 / 标签…" autocomplete="off" />
+        </div>
+      </header>
+
+      <section class="hero" id="hero">
+        <div class="hero-card id-card">
+          <div class="hero-kicker gold">ID PHOTOS</div>
+          <h2>证件照</h2>
+          <p>身份证、行驶证、驾驶证、房产证等正式证件影像，统一归档、一眼可辨。</p>
+          <div class="hero-meta"><span id="hero-id">0</span> 张</div>
+        </div>
+        <div class="hero-card doc-card">
+          <div class="hero-kicker green">DOCUMENTS</div>
+          <h2>文档</h2>
+          <p>文件册、通知书、纸质证明与历史文献扫描件，按文档语义聚合。</p>
+          <div class="hero-meta"><span id="hero-doc">0</span> 张</div>
+        </div>
+      </section>
+
+      <section class="gallery" id="gallery" aria-live="polite"></section>
+      <div class="empty" id="empty" hidden>
+        <div class="empty-title">没有匹配的图片</div>
+        <div class="empty-sub">换个关键词，或切换到其他标签</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lb-close" id="lb-close" type="button" aria-label="关闭">✕</button>
+    <button class="lb-nav prev" id="lb-prev" type="button" aria-label="上一张">‹</button>
+    <figure class="lb-stage">
+      <img id="lb-img" alt="" />
+      <figcaption>
+        <div class="lb-title" id="lb-title"></div>
+        <div class="lb-desc" id="lb-desc"></div>
+        <div class="lb-tags" id="lb-tags"></div>
+        <div class="lb-src" id="lb-src"></div>
+      </figcaption>
+    </figure>
+    <button class="lb-nav next" id="lb-next" type="button" aria-label="下一张">›</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

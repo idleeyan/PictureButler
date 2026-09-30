@@ -1,0 +1,79 @@
+<!-- ==============================================================================
+     PictureButler · 语义层 · 浅色
+     键集合必须与 Semantic.Dark.xaml 完全一致，否则换主题会缺资源。
+     新增/改名请同步修改两份文件。
+     浅色下 hover 一律朝「更深」方向走（深色下朝「更亮」方向走），
+     两条路都是在提升与页面底的对比，且保证实底按钮上的白字始终 ≥ 4.5:1。
+     ============================================================================== -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== 表面（三级：canvas / panel / sunken） ===== -->
+    <SolidColorBrush x:Key="BgBrush"         Color="{StaticResource P.L.Canvas}"/>
+    <SolidColorBrush x:Key="TitleBarBrush"   Color="{StaticResource P.L.TitleBar}"/>
+    <SolidColorBrush x:Key="PanelBrush"      Color="{StaticResource P.L.Panel}"/>
+    <SolidColorBrush x:Key="PanelAltBrush"   Color="{StaticResource P.L.PanelAlt}"/>
+    <SolidColorBrush x:Key="PanelDeepBrush"  Color="{StaticResource P.L.Deep}"/>
+    <SolidColorBrush x:Key="CardBrush"       Color="{StaticResource P.L.Sunken}"/>
+
+    <!-- ===== 描边 ===== -->
+    <SolidColorBrush x:Key="BorderBrush"       Color="{StaticResource P.L.Border}"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource P.L.BorderStrong}"/>
+
+    <!-- ===== 交互态 ===== -->
+    <SolidColorBrush x:Key="HoverBrush"       Color="{StaticResource P.L.Hover}"/>
+    <SolidColorBrush x:Key="HoverStrongBrush" Color="{StaticResource P.L.HoverStrong}"/>
+    <SolidColorBrush x:Key="ActionHoverBrush" Color="{StaticResource P.L.ActionHover}"/>
+    <SolidColorBrush x:Key="SelectedBrush"        Color="{StaticResource P.L.Selected}"/>
+    <SolidColorBrush x:Key="SelectedStrongBrush"  Color="{StaticResource P.L.SelectedStrong}"/>
+
+    <!-- ===== 文本 ===== -->
+    <SolidColorBrush x:Key="TextBrush"      Color="{StaticResource P.L.Text}"/>
+    <SolidColorBrush x:Key="TextDimBrush"   Color="{StaticResource P.L.TextDim}"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="{StaticResource P.L.TextFaint}"/>
+    <SolidColorBrush x:Key="NavIdleBrush"   Color="{StaticResource P.L.TextDim}"/>
+
+    <!-- ===== 强调 / 动作 ===== -->
+    <SolidColorBrush x:Key="AccentBrush"      Color="{StaticResource P.BlueLText}"/>
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource P.BlueLHoverText}"/>
+    <SolidColorBrush x:Key="AccentDimBrush"   Color="{StaticResource P.BlueLDim}"/>
+    <SolidColorBrush x:Key="AccentSoftBrush"  Color="{StaticResource P.BlueLSoft}"/>
+    <SolidColorBrush x:Key="AccentSolidBrush"       Color="{StaticResource P.BlueL}"/>
+    <SolidColorBrush x:Key="AccentSolidHoverBrush"  Color="{StaticResource P.BlueLHover}"/>
+    <SolidColorBrush x:Key="AccentSolidPressBrush"  Color="{StaticResource P.BlueLPress}"/>
+
+    <!-- ===== 状态 ===== -->
+    <SolidColorBrush x:Key="SuccessBrush"      Color="{StaticResource P.GreenL}"/>
+    <SolidColorBrush x:Key="SuccessSoftBrush"  Color="{StaticResource P.GreenLSoft}"/>
+    <SolidColorBrush x:Key="SuccessTextBrush"  Color="{StaticResource P.GreenL}"/>
+    <SolidColorBrush x:Key="InfoBrush"         Color="{StaticResource P.IndigoL}"/>
+    <SolidColorBrush x:Key="InfoSoftBrush"     Color="{StaticResource P.IndigoLSoft}"/>
+    <SolidColorBrush x:Key="InfoTextBrush"     Color="{StaticResource P.IndigoL}"/>
+    <SolidColorBrush x:Key="WarnBrush"         Color="{StaticResource P.AmberL}"/>
+    <SolidColorBrush x:Key="WarnSoftBrush"     Color="{StaticResource P.AmberLSoft}"/>
+    <SolidColorBrush x:Key="WarnSoftTextBrush" Color="{StaticResource P.AmberL}"/>
+    <SolidColorBrush x:Key="DangerBrush"       Color="{StaticResource P.RedL}"/>
+    <SolidColorBrush x:Key="DangerSoftBrush"   Color="{StaticResource P.RedLSoft}"/>
+    <SolidColorBrush x:Key="DangerTextBrush"   Color="{StaticResource P.RedLText}"/>
+    <SolidColorBrush x:Key="DangerHoverBrush"  Color="{StaticResource P.RedLHover}"/>
+    <SolidColorBrush x:Key="DangerPressBrush"  Color="{StaticResource P.RedLDeep}"/>
+
+    <!-- ===== 内容 ===== -->
+    <SolidColorBrush x:Key="StarBrush" Color="{StaticResource P.StarL}"/>
+
+    <!-- ===== 遮罩 / 浮层（浅色下浮层条改浅，描边改深） ===== -->
+    <SolidColorBrush x:Key="OverlayBrush"        Color="{StaticResource P.ScrimL}"/>
+    <SolidColorBrush x:Key="OverlayBarBrush"     Color="{StaticResource P.BarL}"/>
+    <SolidColorBrush x:Key="OverlayChipBrush"    Color="{StaticResource P.ChipL}"/>
+    <SolidColorBrush x:Key="OverlayLightBrush"   Color="{StaticResource P.StrokeL}"/>
+    <SolidColorBrush x:Key="OverlayStrongBrush"  Color="{StaticResource P.StrokeLH}"/>
+
+    <!-- ===== 滚动条滑块 ===== -->
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="{StaticResource P.L.ScrollHover}"/>
+    <SolidColorBrush x:Key="NavHoverBrush" Color="{StaticResource P.L.Hover}"/>
+
+    <!-- ===== 供 Storyboard 使用的 Color 值（动画目标不接受画刷） ===== -->
+    <Color x:Key="ColorCaptionHover" A="0xFF" R="0xE6" G="0xE9" B="0xEF"/>
+    <Color x:Key="ColorCaptionClose" A="0xFF" R="0xC4" G="0x2B" B="0x1C"/>
+
+</ResourceDictionary>

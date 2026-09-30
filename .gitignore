@@ -1,0 +1,53 @@
+# ---- 构建产物 ----
+bin/
+obj/
+target/
+publish-*/
+*.user
+*.suo
+.vs/
+.idea/
+
+# ---- 单文件发布 / 原生库 ----
+*.exe
+*.dll
+*.pdb
+*.lib
+*.exp
+*.rlib
+*.so
+*.dylib
+*.aar
+*.xcframework.zip
+
+# ---- 数据库与运行时数据（绝不入库）----
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db.bak*
+imgtag/
+.faces/
+.thumbs/
+.cache/
+
+# ---- 样例图片（约 100MB，本地保留、不进仓库）----
+assets/
+
+# ---- 临时 / 日志 / 调试 ----
+*.log
+*.tmp
+*.bak
+*.old
+pub-out.txt
+pub-err.txt
+clean-out.txt
+clean-err.txt
+debug_*.log
+.dsh-acl-recovery/
+.workbuddy/
+
+# ---- 系统 ----
+Thumbs.db
+Desktop.ini
+.DS_Store
