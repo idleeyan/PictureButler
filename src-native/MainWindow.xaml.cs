@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 
 namespace PictureButler;
 
@@ -1278,6 +1279,26 @@ public partial class MainWindow : Window
         _settings.Save();
         PromptWallMode = wall;
         ShowNotice(wall ? "已切换到图片墙视图" : "已切换到列表视图");
+    }
+
+    /// <summary>
+    /// 关于区的外链（B站 / GitHub）：交给系统默认浏览器打开（0.62.10）。
+    /// **e.Handled 必须置 true** —— 否则 WPF 会按 NavigationWindow 的语义去"导航"，
+    /// 在普通 Window 里会抛 InvalidOperationException（点击即崩）。
+    /// </summary>
+    private void AboutLink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        try
+        {
+            var url = e.Uri?.AbsoluteUri;
+            if (!string.IsNullOrWhiteSpace(url))
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            ShowNotice("打不开链接：" + (e.Uri?.AbsoluteUri ?? "") + "（" + ex.Message + "）");
+        }
+        e.Handled = true;
     }
 
     /// <summary>

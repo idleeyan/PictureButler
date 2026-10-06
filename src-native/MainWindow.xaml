@@ -18,6 +18,23 @@
         PreviewKeyDown="Window_PreviewKeyDown">
 
     <Window.Resources>
+        <!-- ===== 关于区的外链（0.62.10）：下划线 + 主色，hover 走 AccentHoverBrush =====
+             Hyperlink 不继承 ControlForeground，样式只能挂在它自己身上；
+             光标用 CurArrow（0.62.0 起手型已废弃，全应用只有一种光标）。 -->
+        <Style x:Key="AboutLink" TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Cursor" Value="{DynamicResource CurArrow}"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- ===== 设置页二级导航项（0.61.0 批次 3）：点击滚动定位，不改内容区结构 ===== -->
         <Style x:Key="SetNavBtn" TargetType="RadioButton">
             <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
@@ -979,12 +996,32 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <!-- ===== 关于：版本号在设置页显示（用户 2026-09-14 约定），纯数字不带前后缀 ===== -->
+                                    <!-- ===== 关于：版本号在设置页显示（用户 2026-09-14 约定），纯数字不带前后缀；
+                                         0.62.10 起追加作者主页（0.62.10 用户要求） ===== -->
                                     <TextBlock x:Name="SetSecAbout" Text="关于" Foreground="{StaticResource AccentBrush}" FontSize="{StaticResource TypeBody}" FontWeight="SemiBold" Margin="0,8,0,10"/>
                                     <Border Background="{StaticResource CardBrush}" CornerRadius="10" Padding="16,14" Margin="0,0,0,14">
                                         <StackPanel>
                                             <TextBlock Text="PictureButler" Foreground="{StaticResource TextBrush}" FontSize="{StaticResource TypeBodyLg}" FontWeight="SemiBold"/>
                                             <TextBlock x:Name="SettingsVersionText" Foreground="{StaticResource TextDimBrush}" FontSize="{StaticResource TypeCaption}" Margin="0,6,0,0" Text="版本读取中…"/>
+                                            <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,12,0,10"/>
+                                            <TextBlock Text="作者" Foreground="{StaticResource TextFaintBrush}" FontSize="{StaticResource TypeMicro}" Margin="0,0,0,8"/>
+                                            <TextBlock FontSize="{StaticResource TypeBody}" Margin="0,0,0,6"
+                                                       TextBlock.LineHeight="20">
+                                                <Run Text="B站主页：" Foreground="{StaticResource TextDimBrush}"/>
+                                                <Hyperlink Style="{StaticResource AboutLink}" NavigateUri="https://space.bilibili.com/260166031"
+                                                           RequestNavigate="AboutLink_RequestNavigate"
+                                                           ToolTip="在新标签页打开 https://space.bilibili.com/260166031">
+                                                    <Run Text="space.bilibili.com/260166031" TextDecorations="Underline"/>
+                                                </Hyperlink>
+                                            </TextBlock>
+                                            <TextBlock FontSize="{StaticResource TypeBody}" TextBlock.LineHeight="20">
+                                                <Run Text="GitHub：" Foreground="{StaticResource TextDimBrush}"/>
+                                                <Hyperlink Style="{StaticResource AboutLink}" NavigateUri="https://github.com/idleeyan/PictureButler"
+                                                           RequestNavigate="AboutLink_RequestNavigate"
+                                                           ToolTip="在新标签页打开 https://github.com/idleeyan/PictureButler">
+                                                    <Run Text="github.com/idleeyan/PictureButler" TextDecorations="Underline"/>
+                                                </Hyperlink>
+                                            </TextBlock>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>

@@ -422,19 +422,27 @@ public class ComfyUiMonitor : IDisposable
         return false;
     }
 
+    /// <summary>LLM 提示词工程/辅助节点黑名单。
+    /// 只匹配"功能型"节点（expand/refine/optimize/enhance/polish/rewrite/llm/gpt 等提示词处理），
+    /// 不得匹配纯模型名（qwen/glm/doubao/deepseek/tongyi/baidu/ernie/chatgpt）——
+    /// 否则会误伤正常生成工作流的文本编码节点，如 TextEncodeQwenImage21 / TESpeedQwenImage21（0.62.11 修复）。</summary>
     private static bool IsBlacklisted(string ct) =>
         System.Text.RegularExpressions.Regex.IsMatch(ct,
-            "expand|refine|translat|optim|enhance|polish|rewrite|promptassistant|llm|gpt|doubao|deepseek|qwen|glm|chatgpt|tongyi|baidu|ernie");
+            "expand|refine|translat|optim|enhance|polish|rewrite|promptassistant|llm|gpt");
 
     private static bool IsPromptText(string s)
     {
         var str = s.Trim();
-        if (str.Length < 10) return false;
+        // 0.62.12：0.62.11 只降了长度阈值，但最终规则「含空格或超长」来自英文原版——
+        // 中文提示词（如「田曦薇，高耸的胸部…」）无空格且 <50 字仍被误杀。
+        // 现补：含 CJK 字符即视为提示词文本。文件名/纯数字/控制词等仍被下方规则过滤。
+        if (str.Length < 3) return false;
         if (System.Text.RegularExpressions.Regex.IsMatch(str, @"\.(safetensors|ckpt|pt|bin|gguf|png|jpg|jpeg|webp|json|txt|csv|yaml|yml)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return false;
         if (System.Text.RegularExpressions.Regex.IsMatch(str, @"^[a-z_]+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase) && str.Length < 30) return false;
         if (System.Text.RegularExpressions.Regex.IsMatch(str, @"^\d+$")) return false;
         if (System.Text.RegularExpressions.Regex.IsMatch(str, "^(enable|disable|default|auto|none|null|true|false)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return false;
-        return str.Contains(' ') || str.Length > 50;
+        return str.Contains(' ') || str.Length > 50 ||
+               System.Text.RegularExpressions.Regex.IsMatch(str, @"[\u4e00-\u9fff]");
     }
 
     private static bool IsInstructionText(string? text)

@@ -1,4 +1,4 @@
-PictureButler 原生版（版本 0.62.10）
+PictureButler 原生版（版本 0.62.12）
 ========================================
 
 架构：原生 Windows 桌面程序（WPF / .NET 10）+ 浏览器扩展拾取器。
@@ -31,6 +31,24 @@ PictureButler 原生版（版本 0.62.10）
   + onnxruntime.dll + imgtag_native.dll
 
 【版本历史】
+0.62.12 修复 ComfyUI 监听对中文短提示词的误杀（0.62.11 修复不彻底）：
+  ① 0.62.11 只把 IsPromptText 长度门槛 10 → 3，但该函数最终规则「含空格或超长
+     （str.Contains(' ') || Length > 50）」来自英文原版——英文提示词天然含空格，
+     中文提示词（如「田曦薇，高耸的胸部…」）无空格且 10~50 字之间时仍被判定为
+     非提示词 → 提取为空 → 监听静默跳过。症状：短中文提示词工作流（Mage 短提示词、
+     部分 Qwen 工作流）生成后不自动入库。
+  ② 现补一条规则：含 CJK 字符（[\u4e00-\u9fff]）即视为提示词文本；文件名/纯数字/
+     英文参数值/控制词等仍按原规则过滤。经真实 history 逐 pid 复刻验证：7 张图
+     （含「桃园三结义」「高圆圆」「田曦薇…」「景甜…」）全部可提取。
+
+0.62.11 修复 ComfyUI 监听不保存（开启监听后生成结果不自动入库）：
+  ① 黑名单误伤修复：IsBlacklisted 原正则含 qwen/glm/doubao/deepseek/ernie 等模型名，
+     会把正常生成工作流的文本编码节点 TextEncodeQwenImage21 / TESpeedQwenImage21 当成
+     LLM 提示词辅助节点过滤掉，正向提示词提取为空 → 监听静默跳过、不保存。现只匹配
+     功能型节点（expand/refine/optimize/enhance/polish/rewrite/promptassistant/llm/gpt）。
+  ② 短提示词阈值修复：IsPromptText 长度门槛 10 → 3（注：此步不彻底，中文短提示词
+     仍被最终规则误杀，0.62.12 已彻底修复）。
+
 0.62.10 设置 → 关于新增作者主页：
   ① B站主页 https://space.bilibili.com/260166031
   ② GitHub  https://github.com/idleeyan/PictureButler
